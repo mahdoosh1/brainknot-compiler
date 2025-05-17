@@ -1,5 +1,6 @@
 from parser import Parser, ASTNode, ASTNodeError
 from typing import Container, Iterable
+from types import NoneType
 
 
 """
@@ -49,10 +50,10 @@ def translate_expression(expression: ASTNode, stack_translate: dict[str, int], b
         return f'{number}-+'
     if type_ == "PopOperation":
         stack_name = fields['stack_name']
-        if stack_name not in stack_translate:
-            raise ASTNodeError(expression,f"stack name {stack_name} is not declared")
         if stack_name == 'current':
             return '-'
+        if stack_name not in stack_translate:
+            raise ASTNodeError(expression,f"stack name {stack_name} is not declared")
         number = stack_translate[stack_name]
         return f'{number}-'
     if type_ == "BooleanLiteral":
@@ -63,12 +64,13 @@ def translate_expression(expression: ASTNode, stack_translate: dict[str, int], b
     if type_ == "Input":
         return ">"
     return ""
-def translate(parser: Parser, function_names: list[str] | None = None):
+def translate(statements: list | NoneType = None, declared_variables: dict[str, int] |NoneType = None, function_names: list[str] | None = None, parser=None):
     # 1 stack per binary
     # 4 operand
     # optimization = hard
-    statements = parser.parse_program()
-    declared_variables = parser.defined_identifiers
+    if parser:
+        statements = parser.parse_program()
+        declared_variables = parser.defined_identifiers
     stack_translate = {key: index for index, (key, value) in enumerate(declared_variables.items()) if (value[1] and key != 'current')}
     binary_translate = {key: index for index, (key, value) in enumerate(declared_variables.items()) if (value[0] and key != 'current')}
     if function_names is None:
@@ -155,7 +157,7 @@ def translate(parser: Parser, function_names: list[str] | None = None):
         if type_ == "BreakLoop":
             instruction = "."
         if type_ == "PrintStatement":
-            text = repr(fields['text'])[1:-1]
+            text = fields['text']
             instruction = "{"+text+"}"
         output.append(instruction)
     translated = ''.join(output)

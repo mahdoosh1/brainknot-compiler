@@ -65,7 +65,10 @@ class Parser:
         raise TokenSyntaxError(token, f"Expected token '{token_name}', got 'EOF' in line UNKNOWN")
 
     def parse_program(self) -> list:
+        # __init__
         statements = []
+        self.pos = 0
+        self.defined_identifiers: dict[str,list[bool]] = dict({"current":[True, True, False]}) # {key = name, value = index [0] for binary, [1] for stack, [2] for function}
         while self.pos < len(self.tokens):
             statements.append(self.parse_statement())
         return statements
@@ -78,19 +81,14 @@ class Parser:
             self.consume()
             self.expect('SEMICOLON')
             return ASTNode(type='BreakLoop', fields={}, line=token.line)
-        if token.name == 'PRINTLN':
+        if token.name in ('PRINT', 'PRINTLN'):
             self.consume()
             self.expect('LPAREN')
-            text = literal_eval(self.expect('STRING_LITERAL').value[0])+"\n"
+            text = repr(literal_eval(self.expect('STRING_LITERAL').value[0]))[1:-1].replace("{","\\{").replace("}", "\\}")
             self.expect('RPAREN')
             self.expect('SEMICOLON')
-            return ASTNode(type='PrintStatement',fields={'text': text}, line=token.line)
-        if token.name == 'PRINT':
-            self.consume()
-            self.expect('LPAREN')
-            text = literal_eval(self.expect('STRING_LITERAL').value[0])
-            self.expect('RPAREN')
-            self.expect('SEMICOLON')
+            if token.name == 'PRINTLN':
+                text += "\\n"
             return ASTNode(type='PrintStatement',fields={'text': text}, line=token.line)
         if token.name == 'STACK_DECLARE':
             self.consume()

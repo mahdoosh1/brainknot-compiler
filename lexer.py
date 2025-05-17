@@ -81,3 +81,26 @@ def tokenize(code: str) -> list:
         pos = match.end()
 
     return tokens
+
+if __name__ == "__main__":
+    print("Interactive lexer. Enter code to tokenize (end input with an empty line). Type Ctrl+C to exit.")
+    while True:
+        buffer = []
+        print("\nEnter code (empty line to tokenize):")
+        while True:
+            try:
+                line = input()
+                if line == "":
+                    break
+                buffer.append(line)
+            except EOFError:
+                break
+        code = "\n".join(buffer)
+        if not code.strip():
+            continue
+        try:
+            tokens = tokenize(code)
+            for token in tokens:
+                print(token)
+        except SyntaxError as e:
+            print(f"Lexer error: {e}")
