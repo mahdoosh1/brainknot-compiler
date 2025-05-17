@@ -72,10 +72,10 @@ def translate(parser: Parser, function_names: list[str] | None = None):
     stack_translate = {key: index for index, (key, value) in enumerate(declared_variables.items()) if (value[1] and key != 'current')}
     binary_translate = {key: index for index, (key, value) in enumerate(declared_variables.items()) if (value[0] and key != 'current')}
     if function_names is None:
-        return_funcs = False
+        return_functions = False
         function_names = []
     else:
-        return_funcs = True
+        return_functions = True
     output = []
     for statement in statements:
         fields = statement.fields
@@ -159,6 +159,6 @@ def translate(parser: Parser, function_names: list[str] | None = None):
             instruction = "{"+text+"}"
         output.append(instruction)
     translated = ''.join(output)
-    if return_funcs:
+    if return_functions:
         return translated, function_names
     return translated
