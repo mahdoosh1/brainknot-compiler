@@ -63,7 +63,7 @@ def translate_expression(expression: ASTNode, stack_translate: dict[str, int], b
     if type_ == "Input":
         return ">"
     return ""
-def translate(parser: Parser, functions: list | None = None):
+def translate(parser: Parser, function_names: list[str] | None = None):
     # 1 stack per binary
     # 4 operand
     # optimization = hard
@@ -71,9 +71,9 @@ def translate(parser: Parser, functions: list | None = None):
     declared_variables = parser.defined_identifiers
     stack_translate = {key: index for index, (key, value) in enumerate(declared_variables.items()) if (value[1] and key != 'current')}
     binary_translate = {key: index for index, (key, value) in enumerate(declared_variables.items()) if (value[0] and key != 'current')}
-    if functions is None:
+    if function_names is None:
         return_funcs = False
-        functions = []
+        function_names = []
     else:
         return_funcs = True
     output = []
@@ -119,7 +119,7 @@ def translate(parser: Parser, functions: list | None = None):
                 instruction = f"{target}-{source}{target}+"
         if type_ == "FunctionCall":
             name = fields['name']
-            if name not in functions:
+            if name not in function_names:
                 raise ASTNodeError(statement, f"function {name} is not defined")
             instruction = f"{name} "
         if type_ == "FunctionDefinition":
@@ -127,30 +127,30 @@ def translate(parser: Parser, functions: list | None = None):
             if name == 'current':
                 raise ASTNodeError(statement, f"name {name} is preserved and cannot be redefined")
             body = fields['body']
-            body, functions = translate(body, declared_variables, functions)
+            body, function_names = translate(body, declared_variables, function_names)
             instruction = f"{name}:[{body}]"
-            functions.append(name)
+            function_names.append(name)
         if type_ == "FunctionDefinitionAndCall":
             name = fields['name']
             if name == 'current':
                 raise ASTNodeError(statement, f"name {name} is preserved and cannot be redefined")
             body = fields['body']
-            body, functions = translate(body, declared_variables, functions)
+            body, function_names = translate(body, declared_variables, function_names)
             instruction = f"{name}:({body})"
-            functions.append(name)
+            function_names.append(name)
         if type_ == "IfStatement":
             condition = fields['condition']
             then_block = fields['then_block']
             else_block = fields['else_block']
             condition = translate_expression(condition, stack_translate, binary_translate)
-            then_block, functions  = translate(then_block, declared_variables, functions)
-            else_block, functions  = translate(else_block, declared_variables, functions)
+            then_block, function_names  = translate(then_block, declared_variables, function_names)
+            else_block, function_names  = translate(else_block, declared_variables, function_names)
             instruction = f"{condition}[{then_block},{else_block}]"
         if type_ == "WhileLoop":
             condition = fields['condition']
             body = fields['body']
             condition = translate_expression(condition, stack_translate, binary_translate)
-            body, functions = translate(body, declared_variables, functions)
+            body, function_names = translate(body, declared_variables, function_names)
             instruction = f"{condition}({body})"
         if type_ == "BreakLoop":
             instruction = "."
@@ -160,5 +160,5 @@ def translate(parser: Parser, functions: list | None = None):
         output.append(instruction)
     translated = ''.join(output)
     if return_funcs:
-        return translated, functions
+        return translated, function_names
     return translated
