@@ -73,6 +73,8 @@ def tokenize(code: str) -> list:
                 break
         if matched_type == 'NEWLINE':
             line += 1
+            pos = match.end()
+            continue
         elif matched_type != 'WHITESPACE':
             # Add new token
             tokens.append(
